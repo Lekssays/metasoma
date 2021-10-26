@@ -146,3 +146,5 @@ dmypy.json
 # vendor/
 client
 server
+*.mem
+*.dat

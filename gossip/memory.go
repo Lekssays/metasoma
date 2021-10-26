@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"io/ioutil"
 	"log"
-	"os"
 )
 
 type Memory struct {
@@ -61,31 +60,6 @@ func Decode(s []byte) Memory {
 	}
 
 	return memory
-}
-
-func Write(s []byte, file string) {
-	f, err := os.Create(file)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	f.Write(s)
-	f.Close()
-}
-
-func Read(path string) []byte {
-	f, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return data
 }
 
 func GenerateMemories() []Memory {
