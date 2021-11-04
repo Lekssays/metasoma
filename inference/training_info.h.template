@@ -1,0 +1,7 @@
+#define MEMORY_DIM {memory_dim}
+#define NUM_PROTOS {num_protos}
+#define FORGERY_MODEL_PATH "{forgery_model_path}"
+#define PACKET_MODEL_PATH "{packet_model_path}"
+#define PACKET_CLS_MODEL_PATH "{packet_cls_model_path}"
+#define DEVICE_CLS_MODEL_PATH "{device_cls_model_path}"
+#define MERGE_MODEL_PATH "{merge_model_path}"
