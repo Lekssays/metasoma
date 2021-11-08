@@ -10,7 +10,7 @@ import (
 func main() {
 	address := "0.0.0.0"
 	port := 1337
-	buffer := make([]byte, 2048)
+	buffer := make([]byte, 512)
 
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", address, port))
 	if err != nil {
@@ -24,11 +24,11 @@ func main() {
 	}
 
 	memories := GenerateMemories()
-
+	memoriesBytes := make([]byte, 0)
 	for i := 0; i < len(memories); i++ {
-		encodedMemory := Encode(memories[i])
-		fmt.Fprintf(conn, string(encodedMemory))
+		AppendToBytes(&memoriesBytes, Prepare(memories[i]))
 	}
+	fmt.Fprintf(conn, string(memoriesBytes))
 
 	_, err = bufio.NewReader(conn).Read(buffer)
 	if err == nil {

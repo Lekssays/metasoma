@@ -151,3 +151,4 @@ server
 training/deployment/generated/*
 inference/generated/training_info.h
 inference/limnet
+memory
