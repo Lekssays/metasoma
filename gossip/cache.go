@@ -13,11 +13,11 @@ func Set(memory Memory) {
 	cache[memory.Owner] = memory
 }
 
-func Get(owner int) Memory {
+func Get(owner uint32) Memory {
 	return cache[owner]
 }
 
-func Store(s []byte, owner int) {
+func Store(s []byte, owner uint32) {
 	filename := fmt.Sprintf("./memories/%d.mem", owner)
 	f, err := os.Create(filename)
 
@@ -29,7 +29,7 @@ func Store(s []byte, owner int) {
 	f.Close()
 }
 
-func Read(owner int) []byte {
+func Read(owner uint32) []byte {
 	filename := fmt.Sprintf("./memories/%d.mem", owner)
 	f, err := os.Open(filename)
 	if err != nil {
