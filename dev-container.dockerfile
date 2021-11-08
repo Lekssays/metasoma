@@ -43,3 +43,4 @@ RUN                                                                             
  && /miniconda/bin/conda clean -a -q -y
 
 ENV PATH="${PATH}:/usr/local/go/bin"
+ENV LD_LIBRARY_PATH="/usr/local/lib"
