@@ -88,8 +88,8 @@ func Prepare(memory Memory) []byte {
 	buffer := make([]byte, 0)
 	var owner []byte = I32ToBytes(memory.Owner)
 	var size []byte = I32ToBytes(uint32(len(memory.Hosts)))
-	AppendToBytes(&buffer, owner)
 	AppendToBytes(&buffer, size)
+	AppendToBytes(&buffer, owner)
 	for i := 0; i < len(memory.Hosts); i++ {
 		AppendToBytes(&buffer, I32ToBytes(memory.Hosts[i]))
 	}
@@ -99,7 +99,7 @@ func Prepare(memory Memory) []byte {
 func GenerateMemories() []Memory {
 	memories := []Memory{
 		{
-			Owner: 2,
+			Owner: 7,
 			Hosts: []uint32{
 				3,
 				4,

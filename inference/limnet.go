@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	print(C.initialize(false))
+	// print(C.initialize(false))
 	
 	address := "0.0.0.0"
 	port := 1337
@@ -35,11 +35,35 @@ func main() {
 			return
 		}
 		fmt.Println(buffer, size, remoteaddr)
-		var compressedMemorySize int = int(C.compressed_memory_size())
-		var numberOfEntries int = int(size / (4 + compressedMemorySize))
-		fmt.Println(numberOfEntries)
+		var numberOfEntries int = ParseBuffer(buffer, size)
+		fmt.Println("Number of Memories =",numberOfEntries)
 		// on_memories_received(&buffer[0], &buffer[4*num_entries], num_entries)
 	}
+}
+
+func BytesToI32(val []byte) uint32 {
+	r := uint32(0)
+	for i := uint32(0); i < 4; i++ {
+		r |= uint32(val[i]) << (8 * i)
+	}
+	return r
+}
+
+func ParseBuffer(buffer []byte, size int) int {
+	var bufferedMemories [10][]byte
+	memoriesCount := 0
+	var start uint32 = 0
+	var end uint32 = 0
+	for end < uint32(size) {
+		var memorySize uint32
+		memorySize = BytesToI32(buffer[start:start+4])
+		end = start + uint32(8) + (memorySize * uint32(4))
+		bufferedMemories[memoriesCount] = buffer[start:end]
+		start = end
+		fmt.Println(bufferedMemories[memoriesCount])
+		memoriesCount += 1
+	}
+	return memoriesCount
 }
 
 // func send_memories(conn *net.UDPConn) {
