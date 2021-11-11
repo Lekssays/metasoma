@@ -24,16 +24,10 @@ func main() {
 	}
 
 	memories := GenerateMemories()
-	memoriesBytes := ""
-	var owners []uint32 
-
-	for i := 0; i < len(memories); i++ {
-		memoriesBytes += string(Prepare(memories[i]))
-		owners = append(owners, memories[i].Owner)
-	}
-	log.Println("Sent memories as a batch for", owners)
+	memoriesBytes := string(PrepareMessage(memories))
+	
+	log.Printf("Sending memories as a batch to %s:%d", address, port)
 	fmt.Fprintf(conn, memoriesBytes)
-	owners = nil
 
 	_, err = bufio.NewReader(conn).Read(buffer)
 	if err == nil {

@@ -9,8 +9,8 @@ import (
 )
 
 type Memory struct {
-	Owner uint32
-	Hosts []uint32
+	Owner	uint32
+	Content [32]uint32
 }
 
 func Encode(p interface{}) []byte {
@@ -84,15 +84,29 @@ func AppendToBytes(buffer *[]byte, value []byte) {
 	}
 }
 
-func Prepare(memory Memory) []byte {
+func PrepareMessage(memories []Memory) []byte {
+	const compressedMemSize = 32
+	const maxMemCount = 10
+	var memoriesCount int = len(memories)
+
 	buffer := make([]byte, 0)
-	var owner []byte = I32ToBytes(memory.Owner)
-	var size []byte = I32ToBytes(uint32(len(memory.Hosts)))
-	AppendToBytes(&buffer, size)
-	AppendToBytes(&buffer, owner)
-	for i := 0; i < len(memory.Hosts); i++ {
-		AppendToBytes(&buffer, I32ToBytes(memory.Hosts[i]))
+	
+	AppendToBytes(&buffer, I32ToBytes(uint32(memoriesCount)))
+	
+	var contents [maxMemCount][compressedMemSize]uint32
+	for i := 0; i < memoriesCount; i++ {
+		AppendToBytes(&buffer, I32ToBytes(memories[i].Owner))
+		for j := 0; j < compressedMemSize; j++ {
+			contents[i][j] = memories[i].Content[j]
+		}
 	}
+
+	for i := 0; i < memoriesCount; i++ {
+		for j := 0; j < compressedMemSize; j++ {
+			AppendToBytes(&buffer, I32ToBytes(contents[i][j]))
+		}
+	}
+
 	return buffer
 }
 
@@ -100,42 +114,76 @@ func GenerateMemories() []Memory {
 	memories := []Memory{
 		{
 			Owner: 7,
-			Hosts: []uint32{
-				3,
-				4,
+			Content: [32]uint32{
+				1,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				0,
+				9,
 			},
 		},
 		{
-			Owner: 3290510358,
-			Hosts: []uint32{
-				3103580358,
-				3210358905,
-				3210358905,
-				1033290558,
-				2989952514,
-				3210358905,
-				1033290558,
-				3103580358,
-				2652254021,
-			},
-		},
-		{
-			Owner: 2652254021,
-			Hosts: []uint32{
-				2989952514,
-				3210358905,
-				1033290558,
-			},
-		},
-		{
-			Owner: 2989952514,
-			Hosts: []uint32{
-				3103580358,
-				2652254021,
-				3290510358,
-				2989952514,
-				3210358905,
-				1033290558,
+			Owner: 2237794909,
+			Content: [32]uint32{
+				1350226788,
+				2035283319,
+				3328873732,
+				2013792798,
+				2237794909,
+				2888525616,
+				3046543999,
+				3617579486,
+				1971669918,
+				2513307423,
+				1245590728,
+				2987079650,
+				1876808204,
+				1925279845,
+				1956089770,
+				1705405968,
+				1038792516,
+				3256599353,
+				1502246338,
+				3616156870,
+				4053352369,
+				1326285247,
+				1456192919,
+				1838165923,
+				1918116757,
+				1044999207,
+				3595028482,
+				3453924757,
+				3064481954,
+				1470385246,
+				3946967500,
+				1719886239,
 			},
 		},
 	}
