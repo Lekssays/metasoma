@@ -39,6 +39,12 @@ func main() {
 		memories := ParseMemories(memoriesCount, owners, contents)
 		fmt.Println("Memories =", memories)
 		SaveMemories(memories)
+
+		filePath := "kitsune_test.csv"
+		records := ReadCSV(filePath)
+	 	packets := ParsePackets(records)
+		fmt.Println(packets)
+		C.on_packet_received(C.uint(packets[0].srcIp), C.uint(packets[0].dstIp), (*C.float)(&packets[0].features[0]))
 	}
 }
 

@@ -30,7 +30,7 @@ void on_memories_received(ip_t* ips, void* memories, size_t num_entries);
 // ip_src: ip address of the source node for this packet
 // ip_src: ip address of the destination node for this packet
 // features: buffer containing the packet features (as big as returned by packet_features_size())
-void on_packet_received(ip_t ip_src, ip_t ip_dst, void* features);
+void on_packet_received(ip_t ip_src, ip_t ip_dst, float* features);
 
 // returns at most the requested amount of ip addresses and corresponding memories,
 // with priority to those with memories that should be broadcast soon

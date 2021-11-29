@@ -188,7 +188,7 @@ extern "C" void on_memories_received(ip_t* ips, void* memories, size_t num_entri
         message_queue.enqueue(message_t(std::in_place_type<shared_mem_t>, std::vector(ips, ips + num_entries), decompressed_memories));
 }
 
-extern "C" void on_packet_received(ip_t ip_src, ip_t ip_dst, void* features) {
+extern "C" void on_packet_received(ip_t ip_src, ip_t ip_dst, float* features) {
     auto packet = std::make_unique<packet_t>(ip_src, ip_dst);
     memcpy(&packet->features, features, sizeof(packet_t::features));
     message_queue.enqueue(message_t(std::in_place_type<std::unique_ptr<packet_t>>, std::move(packet)));
