@@ -14,7 +14,7 @@ import (
 )
 
 func GenerateRSAKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
-	privkey, _ := rsa.GenerateKey(rand.Reader, 2048)
+	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
 	return privkey, &privkey.PublicKey
 }
 
@@ -144,7 +144,7 @@ func Verify(checksum string, signature string, publicKey *rsa.PublicKey) bool {
 	return true
 }
 
-func test_crypto() {
+func main() {
 	// Create the keys
 	priv, pub := GenerateRSAKeyPair()
 
@@ -163,7 +163,7 @@ func test_crypto() {
 	fmt.Println(priv_parsed_pem)
 	fmt.Println(pub_parsed_pem)
 
-	message := "something to be encrypted"
+	message := "something to be encrypted some random string haha is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
 	encryptedMessage := Encrypt(message, pub_parsed)
 
 	fmt.Println("Encrypted Message", string(encryptedMessage))
@@ -186,4 +186,7 @@ func test_crypto() {
 	} else {
 		fmt.Println("Success")
 	}
+
+	fmt.Printf("Checksum size %d\n", len(messageChecksum))
+	fmt.Printf("Signature size = %d\n", len(messageSignature))
 }

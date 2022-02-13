@@ -9,8 +9,11 @@ import (
 )
 
 type Memory struct {
-	Owner	uint32
-	Content [32]uint32
+	From      uint32
+	Target    uint32
+	Checksum  string
+	Signature string
+	Content   [32]uint32
 }
 
 func Encode(p interface{}) []byte {
@@ -22,8 +25,6 @@ func Encode(p interface{}) []byte {
 		log.Fatal(err)
 	}
 
-	log.Println("uncompressed size (bytes): ", len(buf.Bytes()))
-
 	return buf.Bytes()
 }
 
@@ -32,7 +33,6 @@ func Compress(s []byte) []byte {
 	zipped := gzip.NewWriter(&zipbuf)
 	zipped.Write(s)
 	zipped.Close()
-	log.Println("compressed size (bytes): ", len(zipbuf.Bytes()))
 	return zipbuf.Bytes()
 }
 
@@ -45,8 +45,6 @@ func Decompress(s []byte) []byte {
 	}
 
 	rdr.Close()
-	log.Println("uncompressed size (bytes): ", len(data))
-
 	return data
 }
 
@@ -84,18 +82,21 @@ func AppendToBytes(buffer *[]byte, value []byte) {
 	}
 }
 
-func PrepareMessage(memories []Memory) []byte {
+func PreparePayload(memories []Memory) []byte {
 	const compressedMemSize = 32
 	const maxMemCount = 10
 	var memoriesCount int = len(memories)
 
 	buffer := make([]byte, 0)
-	
+
 	AppendToBytes(&buffer, I32ToBytes(uint32(memoriesCount)))
-	
+
 	var contents [maxMemCount][compressedMemSize]uint32
 	for i := 0; i < memoriesCount; i++ {
-		AppendToBytes(&buffer, I32ToBytes(memories[i].Owner))
+		AppendToBytes(&buffer, I32ToBytes(memories[i].From))
+		AppendToBytes(&buffer, I32ToBytes(memories[i].Target))
+		AppendToBytes(&buffer, []byte(memories[i].Checksum))
+		AppendToBytes(&buffer, []byte(memories[i].Signature))
 		for j := 0; j < compressedMemSize; j++ {
 			contents[i][j] = memories[i].Content[j]
 		}
@@ -113,7 +114,8 @@ func PrepareMessage(memories []Memory) []byte {
 func GenerateMemories() []Memory {
 	memories := []Memory{
 		{
-			Owner: 7,
+			From:   7,
+			Target: 9,
 			Content: [32]uint32{
 				1,
 				0,
@@ -148,9 +150,12 @@ func GenerateMemories() []Memory {
 				0,
 				9,
 			},
+			Checksum:  "some random base64 checksum",
+			Signature: "some random signature here in base64",
 		},
 		{
-			Owner: 2237794909,
+			From:   2237794909,
+			Target: 3328873732,
 			Content: [32]uint32{
 				1350226788,
 				2035283319,
@@ -185,6 +190,8 @@ func GenerateMemories() []Memory {
 				3946967500,
 				1719886239,
 			},
+			Checksum:  "some random base64 checksum",
+			Signature: "some random signature here in base64",
 		},
 	}
 	return memories

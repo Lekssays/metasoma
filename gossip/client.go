@@ -12,23 +12,20 @@ func main() {
 	port := 1337
 	buffer := make([]byte, 512)
 
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", address, port))
-	if err != nil {
-		log.Println(err)
-	}
+	addr := fmt.Sprintf("%s:%d", address, port)
 
-	conn, err := net.DialUDP("udp", nil, addr)
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 
-	memories := GenerateMemories()
-	memoriesBytes := string(PrepareMessage(memories))
-	
-	log.Printf("Sending memories as a batch to %s:%d", address, port)
-	fmt.Fprintf(conn, memoriesBytes)
+	// memories := GenerateMemories()
+	// memoriesBytes := string(PreparePayload(memories))
 
+	log.Printf("Sending memories as a batch to %s:%d", address, port)
+	// fmt.Fprintf(conn, memoriesBytes)
+	fmt.Fprintf(conn, "something that needs to be sent")
 	_, err = bufio.NewReader(conn).Read(buffer)
 	if err == nil {
 		log.Println(string(buffer))

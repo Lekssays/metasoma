@@ -10,7 +10,7 @@ import (
 var cache = make(map[int]Memory)
 
 func Set(memory Memory) {
-	cache[memory.Owner] = memory
+	cache[memory.From] = memory
 }
 
 func Get(owner uint32) Memory {
@@ -64,9 +64,9 @@ func main() {
 	}
 
 	data := Encode(memories[1])
-	Store(data, memories[1].Owner)
+	Store(data, memories[1].From)
 
-	readData := Read(memories[1].Owner)
+	readData := Read(memories[1].From)
 	readMemory := Decode(readData)
 	fmt.Println(readMemory)
 
