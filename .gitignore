@@ -153,3 +153,5 @@ inference/generated/training_info.h
 inference/limnet
 memory
 *.csv
+*.pem
+guide.md
