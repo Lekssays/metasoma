@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "github.com/Lekssays/ADeLe/gossip/proto/message";
+
+message Memory {
+    uint32 from = 1;
+    uint32 target = 2;
+    string checksum = 3;
+    string signature = 4;
+    repeated uint32 content = 5;
+}
+
+message Message {
+    Memory mergedMemory = 1;
+    repeated Memory parents = 2;
+    repeated string peeringProofs = 3;
+}

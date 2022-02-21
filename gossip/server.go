@@ -2,21 +2,25 @@ package main
 
 import (
 	"fmt"
+	"github.com/golang/protobuf/proto"
+	"github.com/Lekssays/ADeLe/gossip/proto/message"
 	"io"
 	"log"
 	"net"
 	"os"
 )
 
-func sendResponse(conn net.Conn) {
-	_, err := conn.Write([]byte("[*] SERVER: Well received!"))
+func sendResponse(conn net.Conn, memoryProto message.Memory) {
+	response := fmt.Sprintf("[*] SERVER: Received Memory of Target %d From %d", memoryProto.Target, memoryProto.From)
+	log.Println(response)
+	_, err := conn.Write([]byte(response))
 	if err != nil {
 		log.Println(err)
 	}
 }
 
 func handleRequest(conn net.Conn) {
-	fmt.Printf("Handling request from %s\n", conn.RemoteAddr().String())
+	fmt.Printf("[*] SERVER: Handling request from %s\n", conn.RemoteAddr().String())
 	buffer := make([]byte, 2048)
 	for {
 		len, err := conn.Read(buffer)
@@ -30,11 +34,16 @@ func handleRequest(conn net.Conn) {
 			break
 		}
 
-		message := string(buffer[:len])
+		memoryProto := message.Memory{}
+		err = proto.Unmarshal(buffer[:len], &memoryProto)
+		if err != nil {
+			log.Println(err.Error())
+		}
 
-		fmt.Println(message)
+		// message := string(buffer[:len])
+		// fmt.Println(message)
 
-		go sendResponse(conn)
+		go sendResponse(conn, memoryProto)
 	}
 }
 

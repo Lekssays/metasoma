@@ -2,4 +2,7 @@ module github.com/Lekssays/ADeLe/gossip
 
 go 1.16
 
-require github.com/hashicorp/go-memdb v1.3.2 // indirect
+require (
+	github.com/golang/protobuf v1.5.2 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
+)
