@@ -10,8 +10,8 @@ import (
 	"os"
 )
 
-func sendResponse(conn net.Conn, memoryProto message.Memory) {
-	response := fmt.Sprintf("[*] SERVER: Received Memory of Target %d From %d", memoryProto.Target, memoryProto.From)
+func sendResponse(conn net.Conn) {
+	response := fmt.Sprintf("[*] SERVER: Message Received!")
 	log.Println(response)
 	_, err := conn.Write([]byte(response))
 	if err != nil {
@@ -20,7 +20,7 @@ func sendResponse(conn net.Conn, memoryProto message.Memory) {
 }
 
 func handleRequest(conn net.Conn) {
-	fmt.Printf("[*] SERVER: Handling request from %s\n", conn.RemoteAddr().String())
+	log.Println("[*] SERVER: Handling request from", conn.RemoteAddr().String())
 	buffer := make([]byte, 2048)
 	for {
 		len, err := conn.Read(buffer)
@@ -34,16 +34,13 @@ func handleRequest(conn net.Conn) {
 			break
 		}
 
-		memoryProto := message.Memory{}
-		err = proto.Unmarshal(buffer[:len], &memoryProto)
+		messageProto := message.Message{}
+		err = proto.Unmarshal(buffer[:len], &messageProto)
 		if err != nil {
 			log.Println(err.Error())
 		}
 
-		// message := string(buffer[:len])
-		// fmt.Println(message)
-
-		go sendResponse(conn, memoryProto)
+		go sendResponse(conn)
 	}
 }
 
