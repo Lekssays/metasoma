@@ -44,10 +44,10 @@ if __name__ == '__main__':
     torch.jit.script(DeviceClsModel()).save('deployment/generated/device_cls_model.pt')
     torch.jit.script(MergeModel()).save('deployment/generated/merge_model.pt')
     
-    os.makedirs('../inference/generated', exist_ok = True)
-    with open('../inference/training_info.h.template', 'r') as template_file:
+    os.makedirs('../gossip/generated', exist_ok = True)
+    with open('../gossip/training_info.h.template', 'r') as template_file:
         template = template_file.read()
-    with open('../inference/generated/training_info.h', 'w') as generated_header:
+    with open('../gossip/generated/training_info.h', 'w') as generated_header:
         generated_header.write(template.format(
             memory_dim = 32,
             num_protos = 19,

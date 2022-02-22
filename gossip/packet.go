@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/csv"
-    "log"
-    "os"
+	"log"
+	"os"
 	"strconv"
 )
 
@@ -15,21 +15,20 @@ type Packet struct {
 }
 
 func ReadCSV(filePath string) [][]string {
-    f, err := os.Open(filePath)
-    if err != nil {
-        log.Fatal("Unable to read input file " + filePath, err)
-    }
-    defer f.Close()
+	f, err := os.Open(filePath)
+	if err != nil {
+		log.Fatal("Unable to read input file "+filePath, err)
+	}
+	defer f.Close()
 
-    csvReader := csv.NewReader(f)
-    records, err := csvReader.ReadAll()
-    if err != nil {
-        log.Fatal("Unable to parse file as CSV for " + filePath, err)
-    }
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		log.Fatal("Unable to parse file as CSV for "+filePath, err)
+	}
 
-    return records
+	return records
 }
-
 
 func ParsePackets(records [][]string) []Packet {
 	var packets []Packet

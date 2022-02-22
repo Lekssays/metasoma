@@ -28,7 +28,7 @@ func main() {
 	data, err := proto.Marshal(&messageProto)
 	if err != nil {
 		log.Println(err.Error())
-	}	
+	}
 
 	log.Printf("[*] CLIENT: Sending messsage to %s:%d", address, port)
 	conn.Write(data)

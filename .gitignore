@@ -148,10 +148,12 @@ client
 server
 *.mem
 *.dat
-training/deployment/generated/*
-inference/generated/training_info.h
+*/generated/*
+training_info.h
 inference/limnet
 memory
 *.csv
 *.pem
 guide.md
+utils
+*.pt

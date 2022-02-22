@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"github.com/Lekssays/ADeLe/gossip/proto/message"
+	"github.com/golang/protobuf/proto"
 	"io"
 	"log"
 	"net"
