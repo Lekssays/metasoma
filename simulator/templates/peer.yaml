@@ -1,6 +1,6 @@
   core_id:
     container_name: core_id
-    image: ubuntu:latest
+    image: lekssays/declimnet:latest
     environment:
     - CORE_PEER_ID=core_id
     - CORE_PEER_IP_ADDRESS=core_ip
@@ -9,4 +9,4 @@
     volumes:
     - ./entry:/entry
     networks:
-    - basic
+    - limnet

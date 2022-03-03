@@ -1,13 +1,13 @@
 version: '2'
 
 networks:
-  basic:
+  limnet:
 
 services:
 
   178.22.11.09_peer.limnet.io:
     container_name: 178.22.11.09_peer.limnet.io
-    image: ubuntu:latest
+    image: lekssays/declimnet:latest
     environment:
     - CORE_PEER_ID=178.22.11.09_peer.limnet.io
     - CORE_PEER_IP_ADDRESS=178.22.11.09
@@ -16,11 +16,11 @@ services:
     volumes:
     - ./entry:/entry
     networks:
-    - basic
+    - limnet
 
   33.26.189.20_peer.limnet.io:
     container_name: 33.26.189.20_peer.limnet.io
-    image: ubuntu:latest
+    image: lekssays/declimnet:latest
     environment:
     - CORE_PEER_ID=33.26.189.20_peer.limnet.io
     - CORE_PEER_IP_ADDRESS=33.26.189.20
@@ -33,7 +33,7 @@ services:
 
   23.173.32.12_peer.limnet.io:
     container_name: 23.173.32.12_peer.limnet.io
-    image: ubuntu:latest
+    image: lekssays/declimnet:latest
     environment:
     - CORE_PEER_ID=23.173.32.12_peer.limnet.io
     - CORE_PEER_IP_ADDRESS=23.173.32.12
@@ -42,11 +42,11 @@ services:
     volumes:
     - ./entry:/entry
     networks:
-    - basic
+    - limnet
 
   99.21.221.11_peer.limnet.io:
     container_name: 99.21.221.11_peer.limnet.io
-    image: ubuntu:latest
+    image: lekssays/declimnet:latest
     environment:
     - CORE_PEER_ID=99.21.221.11_peer.limnet.io
     - CORE_PEER_IP_ADDRESS=99.21.221.11
@@ -59,7 +59,7 @@ services:
 
   239.33.21.78_peer.limnet.io:
     container_name: 239.33.21.78_peer.limnet.io
-    image: ubuntu:latest
+    image: lekssays/declimnet:latest
     environment:
     - CORE_PEER_ID=239.33.21.78_peer.limnet.io
     - CORE_PEER_IP_ADDRESS=239.33.21.78
@@ -68,5 +68,5 @@ services:
     volumes:
     - ./entry:/entry
     networks:
-    - basic
+    - limnet
 
