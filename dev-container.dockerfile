@@ -40,7 +40,11 @@ RUN                                                                             
 # 7) install Python packages
  && /miniconda/bin/conda install -q -y numpy pandas                                                                         \
  && /miniconda/bin/conda install -q -y pytorch cudatoolkit=11.3 -c pytorch                                                  \
- && /miniconda/bin/conda clean -a -q -y
+ && /miniconda/bin/conda clean -a -q -y                                                                                     \
+# 8) install redis
+ && apt install redis-server systemctl                                                                                      \
+ && sed -i 's/supervised no/supervised systemd/' /etc/redis/redis.conf                                                      \
+ && systemctl restart redis.service
 
 ENV PATH="${PATH}:/usr/local/go/bin"
 ENV LD_LIBRARY_PATH="/usr/local/lib"

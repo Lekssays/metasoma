@@ -192,9 +192,6 @@ func Verify(checksum string, signature string, publicKey *rsa.PublicKey) bool {
 	return true
 }
 
-func HashSHA256(content string) string {
-	h := sha256.New()
-	h.Write([]byte(content))
-	hashed := fmt.Sprintf("%x", h.Sum(nil))
-	return hashed
+func HashSHA256(content string) [32]byte {	
+	return sha256.Sum256([]byte(content))
 }
