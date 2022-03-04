@@ -8,5 +8,7 @@
     working_dir: /entry
     volumes:
     - ./entry:/entry
+    - ../autopeering:/autopeering
+    - ../gossip:/gossip
     networks:
     - limnet

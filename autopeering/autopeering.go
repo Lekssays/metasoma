@@ -1,16 +1,19 @@
 package main
 
 import (
+	"bufio"
 	"context"
-	"fmt"
-
 	"encoding/binary"
 	"encoding/hex"
-
+	"fmt"
+	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/drand/drand/client"
 	"github.com/drand/drand/client/http"
-
+	"github.com/golang/protobuf/proto"
+	"io"
+	"log"
 	"math/rand"
+	"net"
 	"time"
 )
 
@@ -26,10 +29,12 @@ func GetCurrentRandomness() ([]byte, error) {
 		client.WithChainHash(chainHash),
 	)
 	if err != nil {
+		log.Fatal(err)
 		return []byte{}, err
 	}
 	r, err := c.Get(context.Background(), 0)
 	if err != nil {
+		log.Fatal(err)
 		return []byte{}, err
 	}
 	return r.Randomness(), nil
@@ -41,15 +46,15 @@ func GetDistance(a string, b string, salt string) uint64 {
 	saltBytes := []byte(salt)
 	sumBytes := make([]byte, 0)
 	for i := 0; i < len(bBytes); i++ {
-		sumBytes = append(sumBytes, bBytes[i] + saltBytes[i])
+		sumBytes = append(sumBytes, bBytes[i]+saltBytes[i])
 	}
-	
+
 	sumBytesHash := HashSHA256(string(sumBytes))
 	distance := make([]byte, 0)
 	for i := 0; i < len(aHash); i++ {
-		distance = append(distance, aHash[i] ^ sumBytesHash[i])
+		distance = append(distance, aHash[i]^sumBytesHash[i])
 	}
-	
+
 	return binary.BigEndian.Uint64(distance)
 }
 
@@ -63,8 +68,50 @@ func getPrivateSalt() [32]byte {
 	return HashSHA256(string(random.Uint64()))
 }
 
-func SendPeeringRequest() {
-	panic("todo :)")
+func SendPeeringRequest(address string, port int) {
+	buffer := make([]byte, 512)
+
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", address, port))
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	conn, err := net.DialUDP("udp", nil, addr)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	publickey, err := GetKey("pubkey")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	request := peering.Request{
+		Publickey: publickey,
+	}
+
+	// fmt.Fprintf(conn, messsage)
+	
+	data, err := proto.Marshal(&request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	log.Printf("[*] CLIENT: Sending messsage to %s:%d", address, port)
+	conn.Write(data)
+
+	_, err = bufio.NewReader(conn).Read(buffer)
+	if err == nil {
+		log.Println(string(buffer))
+	} else {
+		log.Fatal(err)
+		return
+	}
+
+	conn.Close()
+	return
 }
 
 func AcceptPeeringRequest() {
@@ -78,9 +125,64 @@ func GenerateKeyPair() {
 	fmt.Println(priv_pem, pub_pem)
 }
 
+func sendResponse(conn *net.UDPConn, addr *net.UDPAddr) {
+	// todo(ahmed): evaluate peering requests
+	response := peering.Response{}
+	responseProto, _ := proto.Marshal(&response)
+
+	_, err := conn.WriteToUDP(responseProto, addr)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func handleRequest(conn *net.UDPConn) {
+	buffer := make([]byte, 2048)
+	for {
+		size, remoteaddr, err := conn.ReadFromUDP(buffer)
+
+		if err == io.EOF {
+			break
+		}
+		
+		if err != nil {
+			log.Fatal(err)
+			break
+		}
+
+		log.Printf("Reading a request of size %d bytes from %v\n", size, remoteaddr)
+
+		request := peering.Request{}
+		err = proto.Unmarshal(buffer[:size], &request)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		
+		go sendResponse(conn, remoteaddr)
+	}
+}
+
+func ListenForRequests(address string, port int) {
+	addr := net.UDPAddr{
+		Port: port,
+		IP:   net.ParseIP(address),
+	}
+	ser, err := net.ListenUDP("udp", &addr)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer ser.Close()
+
+	log.Printf("Listening on %s:%d\n", address, port)
+	for {
+		go handleRequest(ser)
+	}
+}
+
 func main() {
 	fmt.Println("Hello")
-	
+
 	GenerateKeyPair()
 
 	randomness, _ := GetCurrentRandomness()
