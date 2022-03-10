@@ -14,6 +14,8 @@ message Pong {
 
 message Request {
     string publickey = 1;
+    string address = 2;
+    uint32 port = 3;
 }
 
 message Response {
@@ -21,4 +23,5 @@ message Response {
     string proof = 2;
     string signature = 3;
     string publickey = 4;
+    string checksum = 5;
 }

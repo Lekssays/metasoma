@@ -165,15 +165,25 @@ func Decrypt(encryptedBytes []byte, privateKey *rsa.PrivateKey) []byte {
 	return decryptedBytes
 }
 
-func Sign(message string, privateKey rsa.PrivateKey) (string, string) {
+func Sign(message string) (string, string) {
+	privateKeyString, err := GetKey("privkey")
+	if err != nil {
+		panic(err)
+	}
+
+	privateKey, err := ParseRSAPrivateKey(privateKeyString)
+	if err != nil {
+		panic(err)
+	}
+
 	msgHash := sha256.New()
-	_, err := msgHash.Write([]byte(message))
+	_, err = msgHash.Write([]byte(message))
 	if err != nil {
 		panic(err)
 	}
 	checksum := msgHash.Sum(nil)
 
-	signature, err := rsa.SignPSS(rand.Reader, &privateKey, crypto.SHA256, checksum, nil)
+	signature, err := rsa.SignPSS(rand.Reader, privateKey, crypto.SHA256, checksum, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -181,10 +191,15 @@ func Sign(message string, privateKey rsa.PrivateKey) (string, string) {
 	return base64.StdEncoding.EncodeToString(signature), base64.StdEncoding.EncodeToString(checksum)
 }
 
-func Verify(checksum string, signature string, publicKey *rsa.PublicKey) bool {
+func Verify(checksum string, signature string, pubkey string) bool {
+	publicKey, err := ParseRSAPublicKey(pubkey)
+	if err != nil {
+		fmt.Errorf(err.Error())
+		return false
+	}
 	decodedSignature, _ := base64.StdEncoding.DecodeString(signature)
 	decodedChecksum, _ := base64.StdEncoding.DecodeString(checksum)
-	err := rsa.VerifyPSS(publicKey, crypto.SHA256, decodedChecksum, decodedSignature, nil)
+	err = rsa.VerifyPSS(publicKey, crypto.SHA256, decodedChecksum, decodedSignature, nil)
 	if err != nil {
 		fmt.Println("could not verify signature: ", err)
 		return false
