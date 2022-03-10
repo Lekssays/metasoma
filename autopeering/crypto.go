@@ -16,8 +16,15 @@ import (
 )
 
 const (
-	REDISSERVER = "0.0.0.0:6379"
+	REDIS_SERVER = "0.0.0.0:6379"
 )
+
+func GenerateKeyPair() {
+	priv, pub := GenerateRSAKeyPair()
+	priv_pem := ExportRSAPrivateKey(priv)
+	pub_pem := ExportRSAPublicKey(pub)
+	fmt.Println(priv_pem, pub_pem)
+}
 
 func GenerateRSAKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
 	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
@@ -27,7 +34,7 @@ func GenerateRSAKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
 func SaveKey(content string, key string) (bool, error) {
 	var ctx = context.Background()
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     REDISSERVER,
+		Addr:     REDIS_SERVER,
 		Password: "",
 		DB:       0,
 	})
@@ -43,7 +50,7 @@ func SaveKey(content string, key string) (bool, error) {
 func GetKey(key string) (string, error) {
 	var ctx = context.Background()
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     REDISSERVER,
+		Addr:     REDIS_SERVER,
 		Password: "",
 		DB:       0,
 	})

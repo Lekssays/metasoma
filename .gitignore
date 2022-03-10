@@ -157,3 +157,5 @@ memory
 guide.md
 utils
 *.pt
+crypto
+autopeering
