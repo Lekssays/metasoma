@@ -214,6 +214,6 @@ func Verify(checksum string, signature string, pubkey string) bool {
 	return true
 }
 
-func HashSHA256(content string) [32]byte {	
+func HashSHA256(content string) [32]byte {
 	return sha256.Sum256([]byte(content))
 }

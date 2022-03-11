@@ -2,8 +2,8 @@
     container_name: core_id
     image: lekssays/declimnet:latest
     environment:
-    - CORE_PEER_ID=core_id
-    - CORE_PEER_IP_ADDRESS=core_ip
+    - DISCOVERY_ADDRESS=core_id
+    - DISCOVERY_PORT=1337
     command: /bin/bash /entry/hello.sh
     working_dir: /entry
     volumes:

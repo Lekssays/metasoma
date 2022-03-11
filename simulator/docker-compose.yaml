@@ -5,68 +5,33 @@ networks:
 
 services:
 
-  178.22.11.09_peer.limnet.io:
-    container_name: 178.22.11.09_peer.limnet.io
+  peer0.limnet.io:
+    container_name: peer0.limnet.io
     image: lekssays/declimnet:latest
     environment:
-    - CORE_PEER_ID=178.22.11.09_peer.limnet.io
-    - CORE_PEER_IP_ADDRESS=178.22.11.09
+    - DISCOVERY_ADDRESS=peer0.limnet.io
+    - DISCOVERY_PORT=1337
     command: /bin/bash /entry/hello.sh
     working_dir: /entry
     volumes:
     - ./entry:/entry
+    - ../autopeering:/autopeering
+    - ../gossip:/gossip
     networks:
     - limnet
 
-  33.26.189.20_peer.limnet.io:
-    container_name: 33.26.189.20_peer.limnet.io
+  peer1.limnet.io:
+    container_name: peer1.limnet.io
     image: lekssays/declimnet:latest
     environment:
-    - CORE_PEER_ID=33.26.189.20_peer.limnet.io
-    - CORE_PEER_IP_ADDRESS=33.26.189.20
+    - DISCOVERY_ADDRESS=peer1.limnet.io
+    - DISCOVERY_PORT=1337
     command: /bin/bash /entry/hello.sh
     working_dir: /entry
     volumes:
     - ./entry:/entry
-    networks:
-    - basic
-
-  23.173.32.12_peer.limnet.io:
-    container_name: 23.173.32.12_peer.limnet.io
-    image: lekssays/declimnet:latest
-    environment:
-    - CORE_PEER_ID=23.173.32.12_peer.limnet.io
-    - CORE_PEER_IP_ADDRESS=23.173.32.12
-    command: /bin/bash /entry/hello.sh
-    working_dir: /entry
-    volumes:
-    - ./entry:/entry
-    networks:
-    - limnet
-
-  99.21.221.11_peer.limnet.io:
-    container_name: 99.21.221.11_peer.limnet.io
-    image: lekssays/declimnet:latest
-    environment:
-    - CORE_PEER_ID=99.21.221.11_peer.limnet.io
-    - CORE_PEER_IP_ADDRESS=99.21.221.11
-    command: /bin/bash /entry/hello.sh
-    working_dir: /entry
-    volumes:
-    - ./entry:/entry
-    networks:
-    - basic
-
-  239.33.21.78_peer.limnet.io:
-    container_name: 239.33.21.78_peer.limnet.io
-    image: lekssays/declimnet:latest
-    environment:
-    - CORE_PEER_ID=239.33.21.78_peer.limnet.io
-    - CORE_PEER_IP_ADDRESS=239.33.21.78
-    command: /bin/bash /entry/hello.sh
-    working_dir: /entry
-    volumes:
-    - ./entry:/entry
+    - ../autopeering:/autopeering
+    - ../gossip:/gossip
     networks:
     - limnet
 

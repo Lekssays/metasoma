@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/golang/protobuf/proto"
-	"io"
 	"log"
 	"net"
 	"os"
-	"strings"
 	"strconv"
 )
 
@@ -19,12 +17,12 @@ var (
 )
 
 func getPort() int {
-    val := os.Getenv("DISCOVERY_PORT")
-    ret, err := strconv.Atoi(val)
-    if err != nil {
-        log.Fatal(err)
-    }
-    return ret
+	val := os.Getenv("DISCOVERY_PORT")
+	ret, err := strconv.Atoi(val)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ret
 }
 
 func SendRequest(rtype string, address string, port int) {
@@ -90,57 +88,5 @@ func SendResponse(request peering.Request, conn *net.UDPConn, addr *net.UDPAddr)
 	_, err := conn.WriteToUDP(responseProto, addr)
 	if err != nil {
 		log.Println(err)
-	}
-}
-
-func main() {
-	args := os.Args[1:]
-
-	if args[0] == "server" {
-		addr := net.UDPAddr{
-			Port: DISCOVERY_PORT,
-			IP:   net.ParseIP(DISCOVERY_ADDRESS),
-		}
-		ser, err := net.ListenUDP("udp", &addr)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		defer ser.Close()
-
-		log.Printf("Listening on %s:%d\n", DISCOVERY_ADDRESS, DISCOVERY_PORT)
-		buffer := make([]byte, 2048)
-		for {
-			size, remoteaddr, err := ser.ReadFromUDP(buffer)
-
-			if err == io.EOF {
-				break
-			}
-
-			if err != nil {
-				log.Fatal(err)
-				break
-			}
-
-			request := peering.Request{}
-			err = proto.Unmarshal(buffer[:size], &request)
-			if err != nil {
-				log.Println(err.Error())
-			}
-
-			log.Printf("Receiving %s request from %v\n", request.Type, remoteaddr)
-
-			endpoint := strings.Split(remoteaddr.String(), ":")
-			if endpoint[0] == request.Address {
-				receivingAddress := net.UDPAddr{
-					Port: int(request.Port),
-					IP:   net.ParseIP(request.Address),
-				}
-
-				go SendResponse(request, ser, &receivingAddress)
-			}
-		}
-	} else if args[0] == "client" {
-		SendRequest("PING", DISCOVERY_ADDRESS, DISCOVERY_PORT)
 	}
 }
