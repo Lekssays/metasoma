@@ -14,8 +14,10 @@ import (
 func main() {
 	fmt.Println("Starting Autopeering Service :)...")
 
-	GenerateKeyPair()
-
+	if _, err := os.Stat("pubkey.pem"); errors.Is(err, os.ErrNotExist) {
+		GenerateKeyPair()
+	}
+	
 	args := os.Args[1:]
 
 	if args[0] == "server" {
