@@ -103,7 +103,7 @@ func RemovePeerDistance(distance peering.Distance) (bool, error) {
 	return true, nil
 }
 
-func GetPeerDistances() ([]peering.Distance, error) {
+func GetPeersDistances() ([]peering.Distance, error) {
 	var ctx = context.Background()
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     REDIS_SERVER,
@@ -131,10 +131,10 @@ func GetPeerDistances() ([]peering.Distance, error) {
 
 func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 	var response peering.Response
-	distances, _ := GetPeerDistances()
+	distances, _ := GetPeersDistances()
 	pubkey, _ := GetKey("pubkey")
 	if len(distances) < MAX_ALLOWED_PEERS {
-		proof := fmt.Sprintf("%x", HashSHA256(request.Publickey))
+		proof := fmt.Sprintf("%x", HashSHA256(GenerateProof()))
 		signature, checksum := Sign(proof)
 		response = peering.Response{
 			Result:    true,
@@ -143,6 +143,7 @@ func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 			Publickey: pubkey,
 			Checksum:  checksum,
 			Purpose:   peering.Purpose_PEERING,
+			Uuid:      request.Uuid,
 		}
 		myPubkey := fmt.Sprintf("%x", HashSHA256(response.Publickey))
 		peerPubKey := fmt.Sprintf("%x", HashSHA256(request.Publickey))
@@ -153,6 +154,7 @@ func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 			Address:   request.Address,
 			Port:      request.Port,
 			Value:     peerDistance,
+			Proof:     request.Proof,
 		}
 		SavePeerDistance(distance)
 	} else {
@@ -173,12 +175,14 @@ func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 				Publickey: pubkey,
 				Checksum:  checksum,
 				Purpose:   peering.Purpose_PEERING,
+				Uuid:      request.Uuid,
 			}
 			distance := peering.Distance{
 				Publickey: request.Publickey,
 				Address:   request.Address,
 				Port:      request.Port,
 				Value:     peerDistance,
+				Proof:     request.Proof,
 			}
 			RemovePeerDistance(distances[len(distances)-1])
 			SavePeerDistance(distance)
@@ -190,6 +194,7 @@ func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 				Publickey: pubkey,
 				Checksum:  "null",
 				Purpose:   peering.Purpose_PEERING,
+				Uuid:      request.Uuid,
 			}
 		}
 	}
@@ -198,7 +203,7 @@ func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 
 func GetCurrentPeers() []string {
 	endpoints := make([]string, 0)
-	distances, _ := GetPeerDistances()
+	distances, _ := GetPeersDistances()
 	for i := 0; i < len(distances); i++ {
 		endpoints = append(endpoints, fmt.Sprintf("%s:%d", distances[i].Address, distances[i].Port))
 	}
@@ -224,4 +229,112 @@ func LoadBasePeers() {
 		}
 	}
 	SavePeerDistance(distance)
+}
+
+func SaveRequest(request peering.Request) (bool, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
+
+	requestString := proto.MarshalTextString(&request)
+
+	err := rdb.SAdd(ctx, "requests", requestString).Err()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func RemoveRequest(request peering.Request) (bool, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
+
+	requestString := proto.MarshalTextString(&request)
+	err := rdb.SRem(ctx, "requests", requestString).Err()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func GetRequests() ([]peering.Request, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
+
+	requestsStrings, err := rdb.SMembers(ctx, "requests").Result()
+	if err != nil {
+		return []peering.Request{}, err
+	}
+
+	var requests []peering.Request
+	for i := 0; i < len(requestsStrings); i++ {
+		var request peering.Request
+		err = proto.UnmarshalText(requestsStrings[i], &request)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		requests = append(requests, request)
+	}
+
+	return requests, nil
+}
+
+func EvaluateResponse(response *peering.Response) bool {
+	requests, err := GetRequests()
+	if err != nil {
+		log.Fatal(err.Error())
+		return false
+	}
+	
+	var request peering.Request
+	found := false
+	for i := 0; i < len(requests); i++ {
+		if requests[i].Uuid == response.Uuid {
+			request = requests[i]
+			found = true
+		}
+	}
+
+	if found {
+		RemoveRequest(request)
+		if response.Result && Verify(response.Checksum, response.Signature, response.Publickey) {
+			pubkey, _ := GetKey("pubkey")
+			myPubkey := fmt.Sprintf("%x", HashSHA256(pubkey))
+			peerPubKey := fmt.Sprintf("%x", HashSHA256(response.Publickey))
+			privateSalt := fmt.Sprintf("%x", GetPrivateSalt())
+			peerDistance := GetDistance(myPubkey, peerPubKey, privateSalt)
+			distance := peering.Distance{
+				Publickey: response.Publickey,
+				Address:   request.Address,
+				Port:      request.Port,
+				Value:     peerDistance,
+				Proof:     response.Proof,
+			}
+			SavePeerDistance(distance)
+			return true
+		}
+	}
+
+	return false
+}
+
+func GenerateProof() string {
+	length := 30
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, length)
+	rand.Read(b)
+	return fmt.Sprintf("%x", b)[:length]
 }

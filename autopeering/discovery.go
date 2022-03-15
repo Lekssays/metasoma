@@ -8,10 +8,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 )
 
 var (
@@ -46,6 +48,8 @@ func SendRequest(purpose peering.Purpose, address string, port int) {
 		log.Fatal(err)
 	}
 
+	requestUUID := uuid.New().String()
+	proof := fmt.Sprintf("%x", HashSHA256(GenerateProof()))
 	payload := peering.Payload{
 		Type: &peering.Payload_Request{
 			Request: &peering.Request{
@@ -53,11 +57,27 @@ func SendRequest(purpose peering.Purpose, address string, port int) {
 				Address:   DISCOVERY_ADDRESS,
 				Port:      uint32(DISCOVERY_PORT),
 				Purpose:   purpose,
+				Uuid:      requestUUID,
+				Proof:     proof,
 			},
 		},
 	}
 
 	data, err := proto.Marshal(&payload)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	request := peering.Request{
+		Publickey: publickey,
+		Address:   DISCOVERY_ADDRESS,
+		Port:      uint32(DISCOVERY_PORT),
+		Purpose:   purpose,
+		Uuid:      requestUUID,
+		Proof:     proof,
+	}
+
+	_, err = SaveRequest(request)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,6 +108,7 @@ func SendResponse(request *peering.Request, conn *net.UDPConn, addr *net.UDPAddr
 			Publickey: pubkey,
 			Checksum:  "null",
 			Purpose:   peering.Purpose_PONG,
+			Uuid:      request.Uuid,
 		}
 	}
 
@@ -104,22 +125,40 @@ func SendResponse(request *peering.Request, conn *net.UDPConn, addr *net.UDPAddr
 	}
 }
 
-func CheckLivness() {
-	for {
-		endpoints := GetCurrentPeers()
-		if len(endpoints) > 0 {
-			for i := 0; i < len(endpoints); i++ {
-				endpoint := strings.Split(endpoints[i], ":")
-				address := endpoint[0]
-				port, err := strconv.Atoi(endpoint[1])
-				if err != nil {
-					log.Fatal(err)
-				}
-				if address != DISCOVERY_ADDRESS {
-					SendRequest(peering.Purpose_PING, address, port)
-				}
+func CheckLiveness(wg *sync.WaitGroup) {
+	endpoints := GetCurrentPeers()
+	if len(endpoints) > 0 {
+		for i := 0; i < len(endpoints); i++ {
+			endpoint := strings.Split(endpoints[i], ":")
+			address := endpoint[0]
+			port, err := strconv.Atoi(endpoint[1])
+			if err != nil {
+				log.Fatal(err)
+				wg.Done()
+			}
+			if address != DISCOVERY_ADDRESS {
+				SendRequest(peering.Purpose_PING, address, port)
 			}
 		}
-		time.Sleep(60 * time.Second)
 	}
+	time.Sleep(60 * time.Second)
+	wg.Done()
+}
+
+func GossipPeers(wg *sync.WaitGroup, sent map[string]bool) {
+	peers := make([]peering.Peer, 0)
+	distances, _ := GetPeersDistances()
+	for i := 0; i < len(distances); i++ {
+		peer := peering.Peer{
+			Publickey: distances[i].Publickey,
+			Address:   distances[i].Address,
+			Port:      distances[i].Port,
+		}
+		if !sent[peer.Publickey] {
+			sent[peer.Publickey] = true
+			peers = append(peers, peer)
+		}
+	}
+	time.Sleep(300 * time.Second)
+	wg.Done()
 }

@@ -8,6 +8,8 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/golang/protobuf/proto"
@@ -57,7 +59,12 @@ func main() {
 
 			switch rtype := payload.Type.(type) {
 			case *peering.Payload_Response:
-				log.Printf("Receiving %s response with result %s from %v", rtype.Response.Purpose, strconv.FormatBool(rtype.Response.Result), remoteaddr)
+				if rtype.Response.Purpose == peering.Purpose_PONG {
+					log.Printf("Receiving %s response from %v", rtype.Response.Purpose, remoteaddr)
+				} else if rtype.Response.Purpose == peering.Purpose_PEERING {
+					log.Printf("Receiving %s response with result %s from %v", rtype.Response.Purpose, strconv.FormatBool(rtype.Response.Result), remoteaddr)
+					EvaluateResponse(rtype.Response)
+				}
 			case *peering.Payload_Request:
 				log.Printf("Receiving %s request from %v", rtype.Request.Purpose, remoteaddr)
 				receivingAddress := net.UDPAddr{
@@ -68,6 +75,20 @@ func main() {
 			}
 		}
 	} else if args[0] == "client" {
-		CheckLivness()
+		var wg sync.WaitGroup
+		sent := make(map[string]bool)
+		for {
+			timer := time.After(6 * time.Minute)
+
+			wg.Add(1)
+			go CheckLiveness(&wg)
+
+			wg.Add(1)
+			go GossipPeers(&wg, sent)
+
+			wg.Wait()
+
+			<-timer
+		}
 	}
 }
