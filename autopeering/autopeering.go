@@ -5,15 +5,16 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
+	"log"
+	"math/rand"
+	"sort"
+	"time"
+
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/drand/drand/client"
 	"github.com/drand/drand/client/http"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/protobuf/proto"
-	"log"
-	"math/rand"
-	"sort"
-	"time"
 )
 
 const (
@@ -128,7 +129,7 @@ func GetPeerDistances() ([]peering.Distance, error) {
 	return distances, nil
 }
 
-func EvaluatePeeringRequest(request peering.Request) peering.Response {
+func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 	var response peering.Response
 	distances, _ := GetPeerDistances()
 	pubkey, _ := GetKey("pubkey")
@@ -141,7 +142,7 @@ func EvaluatePeeringRequest(request peering.Request) peering.Response {
 			Signature: signature,
 			Publickey: pubkey,
 			Checksum:  checksum,
-			Type:      "PEERING",
+			Purpose:   peering.Purpose_PEERING,
 		}
 		myPubkey := fmt.Sprintf("%x", HashSHA256(response.Publickey))
 		peerPubKey := fmt.Sprintf("%x", HashSHA256(request.Publickey))
@@ -171,7 +172,7 @@ func EvaluatePeeringRequest(request peering.Request) peering.Response {
 				Signature: signature,
 				Publickey: pubkey,
 				Checksum:  checksum,
-				Type:      "PEERING",
+				Purpose:   peering.Purpose_PEERING,
 			}
 			distance := peering.Distance{
 				Publickey: request.Publickey,
@@ -184,11 +185,11 @@ func EvaluatePeeringRequest(request peering.Request) peering.Response {
 		} else {
 			response = peering.Response{
 				Result:    false,
-				Proof:     "",
-				Signature: "",
+				Proof:     "null",
+				Signature: "null",
 				Publickey: pubkey,
-				Checksum:  "",
-				Type:      "PEERING",
+				Checksum:  "null",
+				Purpose:   peering.Purpose_PEERING,
 			}
 		}
 	}

@@ -49,30 +49,23 @@ func main() {
 				break
 			}
 
-			request := peering.Request{}
-			err = proto.Unmarshal(buffer[:size], &request)
+			payload := peering.Payload{}
+			err = proto.Unmarshal(buffer[:size], &payload)
 			if err != nil {
 				log.Println(err.Error())
 			}
 
-			// todo(ahmed): there is an elegant way of doing it with oneof in proto definition
-			if request.Type != "PEERING" || request.Type != "PING" {
-				response := peering.Response{}
-				err = proto.Unmarshal(buffer[:size], &response)
-				if err != nil {
-					log.Println(err.Error())
-				}
-				fmt.Println(response)
-				log.Printf("Receiving %s response with result %s from %v", response.Type, strconv.FormatBool(response.Result), remoteaddr)
-			} else {
-				log.Printf("Receiving %s request from %v", request.Type, remoteaddr)
+			switch rtype := payload.Type.(type) {
+			case *peering.Payload_Response:
+				log.Printf("Receiving %s response with result %s from %v", rtype.Response.Purpose, strconv.FormatBool(rtype.Response.Result), remoteaddr)
+			case *peering.Payload_Request:
+				log.Printf("Receiving %s request from %v", rtype.Request.Purpose, remoteaddr)
 				receivingAddress := net.UDPAddr{
-					Port: int(request.Port),
+					Port: int(rtype.Request.Port),
 					IP:   net.ParseIP(remoteaddr.IP.String()),
 				}
-				go SendResponse(request, ser, &receivingAddress)
+				go SendResponse(rtype.Request, ser, &receivingAddress)
 			}
-
 		}
 	} else if args[0] == "client" {
 		CheckLivness()

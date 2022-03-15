@@ -28,7 +28,7 @@ func getPort() int {
 	return ret
 }
 
-func SendRequest(rtype string, address string, port int) {
+func SendRequest(purpose peering.Purpose, address string, port int) {
 	buffer := make([]byte, 2048)
 
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", address, port))
@@ -46,19 +46,23 @@ func SendRequest(rtype string, address string, port int) {
 		log.Fatal(err)
 	}
 
-	request := peering.Request{
-		Publickey: publickey,
-		Address:   DISCOVERY_ADDRESS,
-		Port:      uint32(DISCOVERY_PORT),
-		Type:      rtype,
+	payload := peering.Payload{
+		Type: &peering.Payload_Request{
+			Request: &peering.Request{
+				Publickey: publickey,
+				Address:   DISCOVERY_ADDRESS,
+				Port:      uint32(DISCOVERY_PORT),
+				Purpose:   purpose,
+			},
+		},
 	}
 
-	data, err := proto.Marshal(&request)
+	data, err := proto.Marshal(&payload)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Sending %s request from %s:%d to %s:%d", request.Type, request.Address, request.Port, address, port)
+	log.Printf("Sending %s request to %s:%d\n", purpose.String(), address, port)
 	conn.Write(data)
 
 	_, err = bufio.NewReader(conn).Read(buffer)
@@ -71,24 +75,30 @@ func SendRequest(rtype string, address string, port int) {
 	conn.Close()
 }
 
-func SendResponse(request peering.Request, conn *net.UDPConn, addr *net.UDPAddr) {
+func SendResponse(request *peering.Request, conn *net.UDPConn, addr *net.UDPAddr) {
 	var response peering.Response
 	pubkey, _ := GetKey("pubkey")
-	if request.Type == "PEERING" {
+	if request.Purpose == peering.Purpose_PEERING {
 		response = EvaluatePeeringRequest(request)
-	} else if request.Type == "PING" {
+	} else if request.Purpose == peering.Purpose_PING {
 		response = peering.Response{
 			Result:    false,
 			Proof:     "null",
 			Signature: "null",
 			Publickey: pubkey,
 			Checksum:  "null",
-			Type:      "PONG",
+			Purpose:   peering.Purpose_PONG,
 		}
 	}
 
-	responseProto, _ := proto.Marshal(&response)
-	_, err := conn.WriteToUDP(responseProto, addr)
+	payload := peering.Payload{
+		Type: &peering.Payload_Response{
+			Response: &response,
+		},
+	}
+
+	payloadProto, _ := proto.Marshal(&payload)
+	_, err := conn.WriteToUDP(payloadProto, addr)
 	if err != nil {
 		log.Println(err)
 	}
@@ -106,7 +116,7 @@ func CheckLivness() {
 					log.Fatal(err)
 				}
 				if address != DISCOVERY_ADDRESS {
-					SendRequest("PING", address, port)
+					SendRequest(peering.Purpose_PING, address, port)
 				}
 			}
 		}
