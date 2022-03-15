@@ -3,12 +3,15 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
-	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
 	"os"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -26,7 +29,7 @@ func getPort() int {
 }
 
 func SendRequest(rtype string, address string, port int) {
-	buffer := make([]byte, 512)
+	buffer := make([]byte, 2048)
 
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", address, port))
 	if err != nil {
@@ -55,7 +58,7 @@ func SendRequest(rtype string, address string, port int) {
 		log.Fatal(err)
 	}
 
-	log.Printf("Sending %s request to %s:%d", request.Type, address, port)
+	log.Printf("Sending %s request from %s:%d to %s:%d", request.Type, request.Address, request.Port, address, port)
 	conn.Write(data)
 
 	_, err = bufio.NewReader(conn).Read(buffer)
@@ -76,10 +79,10 @@ func SendResponse(request peering.Request, conn *net.UDPConn, addr *net.UDPAddr)
 	} else if request.Type == "PING" {
 		response = peering.Response{
 			Result:    false,
-			Proof:     "",
-			Signature: "",
+			Proof:     "null",
+			Signature: "null",
 			Publickey: pubkey,
-			Checksum:  "",
+			Checksum:  "null",
 			Type:      "PONG",
 		}
 	}
@@ -88,5 +91,25 @@ func SendResponse(request peering.Request, conn *net.UDPConn, addr *net.UDPAddr)
 	_, err := conn.WriteToUDP(responseProto, addr)
 	if err != nil {
 		log.Println(err)
+	}
+}
+
+func CheckLivness() {
+	for {
+		endpoints := GetCurrentPeers()
+		if len(endpoints) > 0 {
+			for i := 0; i < len(endpoints); i++ {
+				endpoint := strings.Split(endpoints[i], ":")
+				address := endpoint[0]
+				port, err := strconv.Atoi(endpoint[1])
+				if err != nil {
+					log.Fatal(err)
+				}
+				if address != DISCOVERY_ADDRESS {
+					SendRequest("PING", address, port)
+				}
+			}
+		}
+		time.Sleep(60 * time.Second)
 	}
 }

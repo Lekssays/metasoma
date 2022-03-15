@@ -1,23 +1,26 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
-	"github.com/golang/protobuf/proto"
 	"io"
 	"log"
 	"net"
 	"os"
-	"strings"
+	"strconv"
+
+	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
+	"github.com/golang/protobuf/proto"
 )
 
 func main() {
 	fmt.Println("Starting Autopeering Service :)...")
 
-	if _, err := os.Stat("pubkey.pem"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat("./pubkey.pem"); errors.Is(err, os.ErrNotExist) {
 		GenerateKeyPair()
+		LoadBasePeers()
 	}
-	
+
 	args := os.Args[1:]
 
 	if args[0] == "server" {
@@ -52,19 +55,26 @@ func main() {
 				log.Println(err.Error())
 			}
 
-			log.Printf("Receiving %s request from %v\n", request.Type, remoteaddr)
-
-			endpoint := strings.Split(remoteaddr.String(), ":")
-			if endpoint[0] == request.Address {
+			// todo(ahmed): there is an elegant way of doing it with oneof in proto definition
+			if request.Type != "PEERING" || request.Type != "PING" {
+				response := peering.Response{}
+				err = proto.Unmarshal(buffer[:size], &response)
+				if err != nil {
+					log.Println(err.Error())
+				}
+				fmt.Println(response)
+				log.Printf("Receiving %s response with result %s from %v", response.Type, strconv.FormatBool(response.Result), remoteaddr)
+			} else {
+				log.Printf("Receiving %s request from %v", request.Type, remoteaddr)
 				receivingAddress := net.UDPAddr{
 					Port: int(request.Port),
-					IP:   net.ParseIP(request.Address),
+					IP:   net.ParseIP(remoteaddr.IP.String()),
 				}
-
 				go SendResponse(request, ser, &receivingAddress)
 			}
+
 		}
 	} else if args[0] == "client" {
-		SendRequest("PING", DISCOVERY_ADDRESS, DISCOVERY_PORT)
+		CheckLivness()
 	}
 }

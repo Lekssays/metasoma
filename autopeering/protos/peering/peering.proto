@@ -4,12 +4,30 @@ package message;
 
 option go_package = "github.com/Lekssays/ADeLe/autopeering/proto/peering";
 
+enum Type {
+    PEERING = 0;
+    PINGPONG = 1;
+}
+
+message Distance {
+    string publickey = 1;
+    string address = 2;
+    uint32 port = 3;
+    uint64 value = 4;
+}
+
+message Payload {
+    oneof type {
+        Request request = 1;
+        Response response = 2;
+    }
+}
 
 message Request {
     string publickey = 1;
     string address = 2;
     uint32 port = 3;
-    string type = 4;
+    Type type = 4;
 }
 
 message Response {
@@ -18,5 +36,5 @@ message Response {
     string signature = 3;
     string publickey = 4;
     string checksum = 5;
-    string type = 6;
+    Type type = 6;
 }

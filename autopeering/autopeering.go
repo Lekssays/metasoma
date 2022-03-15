@@ -1,16 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
-	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/drand/drand/client"
 	"github.com/drand/drand/client/http"
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis/v8"
+	"github.com/golang/protobuf/proto"
 	"log"
 	"math/rand"
 	"sort"
@@ -18,16 +17,8 @@ import (
 )
 
 const (
-	REDIS_ENDPOINT    = "http://127.0.0.1:6379"
 	MAX_ALLOWED_PEERS = 5
 )
-
-type Distance struct {
-	Publickey string
-	Address   string
-	Port      uint32
-	Value     uint64
-}
 
 func GetCurrentRandomness() ([]byte, error) {
 	var urls = []string{
@@ -76,67 +67,70 @@ func GetPrivateSalt() [32]byte {
 	return HashSHA256(string(random.Uint64()))
 }
 
-func SavePeerDistance(distance Distance) {
-	pool := &redis.Pool{
-		DialContext: func(ctx context.Context) (redis.Conn, error) {
-			return redis.Dial("tcp", REDIS_ENDPOINT)
-		},
+func SavePeerDistance(distance peering.Distance) (bool, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
 
-		MaxIdle:     1024,
-		IdleTimeout: 5 * time.Minute,
+	distanceString := proto.MarshalTextString(&distance)
+
+	err := rdb.SAdd(ctx, "distances", distanceString).Err()
+	if err != nil {
+		return false, err
 	}
 
-	conn := pool.Get()
-	defer conn.Close()
-
-	var buf bytes.Buffer
-	gob.NewEncoder(&buf).Encode(distance)
-	conn.Do("SADD", "distances", buf.Bytes())
+	return true, nil
 }
 
-func RemovePeerDistance(distance Distance) {
-	pool := &redis.Pool{
-		DialContext: func(ctx context.Context) (redis.Conn, error) {
-			return redis.Dial("tcp", REDIS_ENDPOINT)
-		},
+func RemovePeerDistance(distance peering.Distance) (bool, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
 
-		MaxIdle:     1024,
-		IdleTimeout: 5 * time.Minute,
+	distanceString := proto.MarshalTextString(&distance)
+	err := rdb.SRem(ctx, "distances", distanceString).Err()
+	if err != nil {
+		return false, err
 	}
 
-	conn := pool.Get()
-	defer conn.Close()
-
-	var buf bytes.Buffer
-	gob.NewEncoder(&buf).Encode(distance)
-	conn.Do("SREM", "distances", buf.Bytes())
+	return true, nil
 }
 
-func GetPeerDistances() []Distance {
-	pool := &redis.Pool{
-		DialContext: func(ctx context.Context) (redis.Conn, error) {
-			return redis.Dial("tcp", REDIS_ENDPOINT)
-		},
+func GetPeerDistances() ([]peering.Distance, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
 
-		MaxIdle:     1024,
-		IdleTimeout: 5 * time.Minute,
+	distancesStrings, err := rdb.SMembers(ctx, "distances").Result()
+	if err != nil {
+		return []peering.Distance{}, err
 	}
 
-	conn := pool.Get()
-	defer conn.Close()
+	var distances []peering.Distance
+	for i := 0; i < len(distancesStrings); i++ {
+		var distance peering.Distance
+		err = proto.UnmarshalText(distancesStrings[i], &distance)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		distances = append(distances, distance)
+	}
 
-	bs, _ := redis.Bytes(conn.Do("SMEMBERS", "distances"))
-	bytesReader := bytes.NewReader(bs)
-
-	var distances []Distance
-	gob.NewDecoder(bytesReader).Decode(&distances)
-
-	return distances
+	return distances, nil
 }
 
 func EvaluatePeeringRequest(request peering.Request) peering.Response {
 	var response peering.Response
-	distances := GetPeerDistances()
+	distances, _ := GetPeerDistances()
 	pubkey, _ := GetKey("pubkey")
 	if len(distances) < MAX_ALLOWED_PEERS {
 		proof := fmt.Sprintf("%x", HashSHA256(request.Publickey))
@@ -153,7 +147,7 @@ func EvaluatePeeringRequest(request peering.Request) peering.Response {
 		peerPubKey := fmt.Sprintf("%x", HashSHA256(request.Publickey))
 		privateSalt := fmt.Sprintf("%x", GetPrivateSalt())
 		peerDistance := GetDistance(myPubkey, peerPubKey, privateSalt)
-		distance := Distance{
+		distance := peering.Distance{
 			Publickey: request.Publickey,
 			Address:   request.Address,
 			Port:      request.Port,
@@ -179,7 +173,7 @@ func EvaluatePeeringRequest(request peering.Request) peering.Response {
 				Checksum:  checksum,
 				Type:      "PEERING",
 			}
-			distance := Distance{
+			distance := peering.Distance{
 				Publickey: request.Publickey,
 				Address:   request.Address,
 				Port:      request.Port,
@@ -199,4 +193,34 @@ func EvaluatePeeringRequest(request peering.Request) peering.Response {
 		}
 	}
 	return response
+}
+
+func GetCurrentPeers() []string {
+	endpoints := make([]string, 0)
+	distances, _ := GetPeerDistances()
+	for i := 0; i < len(distances); i++ {
+		endpoints = append(endpoints, fmt.Sprintf("%s:%d", distances[i].Address, distances[i].Port))
+	}
+	return endpoints
+}
+
+func LoadBasePeers() {
+	// todo(ahmed): Load peers from a generated binary (nodes managed by LiMNet admins)
+	var distance peering.Distance
+	if DISCOVERY_ADDRESS == "peer0.limnet.io" {
+		distance = peering.Distance{
+			Publickey: "",
+			Address:   "peer1.limnet.io",
+			Port:      1337,
+			Value:     100,
+		}
+	} else if DISCOVERY_ADDRESS == "peer1.limnet.io" {
+		distance = peering.Distance{
+			Publickey: "",
+			Address:   "peer0.limnet.io",
+			Port:      1337,
+			Value:     100,
+		}
+	}
+	SavePeerDistance(distance)
 }
