@@ -7,7 +7,7 @@ services:
 
   peer0.limnet.io:
     container_name: peer0.limnet.io
-    image: declimnet:latest
+    image: lekssays/declimnet:latest
     environment:
     - DISCOVERY_ADDRESS=peer0.limnet.io
     - DISCOVERY_PORT=1337
