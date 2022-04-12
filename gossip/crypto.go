@@ -144,49 +144,49 @@ func Verify(checksum string, signature string, publicKey *rsa.PublicKey) bool {
 	return true
 }
 
-func main() {
-	// Create the keys
-	priv, pub := GenerateRSAKeyPair()
+// func main() {
+// 	// Create the keys
+// 	priv, pub := GenerateRSAKeyPair()
 
-	// Export the keys to pem string
-	priv_pem := ExportRSAPrivateKey(priv)
-	pub_pem, _ := ExportRSAPublicKey(pub)
+// 	// Export the keys to pem string
+// 	priv_pem := ExportRSAPrivateKey(priv)
+// 	pub_pem, _ := ExportRSAPublicKey(pub)
 
-	// Import the keys from pem string
-	priv_parsed, _ := ParseRSAPrivateKey(priv_pem)
-	pub_parsed, _ := ParseRSAPublicKey(pub_pem)
+// 	// Import the keys from pem string
+// 	priv_parsed, _ := ParseRSAPrivateKey(priv_pem)
+// 	pub_parsed, _ := ParseRSAPublicKey(pub_pem)
 
-	// Export the newly imported keys
-	priv_parsed_pem := ExportRSAPrivateKey(priv_parsed)
-	pub_parsed_pem, _ := ExportRSAPublicKey(pub_parsed)
+// 	// Export the newly imported keys
+// 	priv_parsed_pem := ExportRSAPrivateKey(priv_parsed)
+// 	pub_parsed_pem, _ := ExportRSAPublicKey(pub_parsed)
 
-	fmt.Println(priv_parsed_pem)
-	fmt.Println(pub_parsed_pem)
+// 	fmt.Println(priv_parsed_pem)
+// 	fmt.Println(pub_parsed_pem)
 
-	message := "something to be encrypted some random string haha is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
-	encryptedMessage := Encrypt(message, pub_parsed)
+// 	message := "something to be encrypted some random string haha is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
+// 	encryptedMessage := Encrypt(message, pub_parsed)
 
-	fmt.Println("Encrypted Message", string(encryptedMessage))
+// 	fmt.Println("Encrypted Message", string(encryptedMessage))
 
-	decryptedMessage := Decrypt(encryptedMessage, priv)
-	fmt.Println("Decrypted Message", string(decryptedMessage))
+// 	decryptedMessage := Decrypt(encryptedMessage, priv)
+// 	fmt.Println("Decrypted Message", string(decryptedMessage))
 
-	messageSignature, messageChecksum := Sign(string(decryptedMessage), *priv)
-	fmt.Println("Signature:", messageSignature)
-	fmt.Println("Checksum:", messageChecksum)
+// 	messageSignature, messageChecksum := Sign(string(decryptedMessage), *priv)
+// 	fmt.Println("Signature:", messageSignature)
+// 	fmt.Println("Checksum:", messageChecksum)
 
-	if Verify(messageChecksum, messageSignature, pub) {
-		fmt.Println("Message is verified")
-	} else {
-		fmt.Println("Message signature does not match")
-	}
+// 	if Verify(messageChecksum, messageSignature, pub) {
+// 		fmt.Println("Message is verified")
+// 	} else {
+// 		fmt.Println("Message signature does not match")
+// 	}
 
-	if priv_pem != priv_parsed_pem || pub_pem != pub_parsed_pem {
-		fmt.Println("Failure: Export and Import did not result in same Keys")
-	} else {
-		fmt.Println("Success")
-	}
+// 	if priv_pem != priv_parsed_pem || pub_pem != pub_parsed_pem {
+// 		fmt.Println("Failure: Export and Import did not result in same Keys")
+// 	} else {
+// 		fmt.Println("Success")
+// 	}
 
-	fmt.Printf("Checksum size %d\n", len(messageChecksum))
-	fmt.Printf("Signature size = %d\n", len(messageSignature))
-}
+// 	fmt.Printf("Checksum size %d\n", len(messageChecksum))
+// 	fmt.Printf("Signature size = %d\n", len(messageSignature))
+// }

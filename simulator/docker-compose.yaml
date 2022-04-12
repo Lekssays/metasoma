@@ -7,7 +7,7 @@ services:
 
   peer0.limnet.io:
     container_name: peer0.limnet.io
-    image: lekssays/declimnet:latest
+    image: declimnet:latest
     environment:
     - DISCOVERY_ADDRESS=peer0.limnet.io
     - DISCOVERY_PORT=1337
@@ -15,23 +15,9 @@ services:
     working_dir: /entry
     volumes:
     - ./entry:/entry
-    - ../autopeering:/autopeering
-    - ../gossip:/gossip
-    networks:
-    - limnet
-
-  peer1.limnet.io:
-    container_name: peer1.limnet.io
-    image: lekssays/declimnet:latest
-    environment:
-    - DISCOVERY_ADDRESS=peer1.limnet.io
-    - DISCOVERY_PORT=1337
-    command: /bin/bash /entry/hello.sh
-    working_dir: /entry
-    volumes:
-    - ./entry:/entry
-    - ../autopeering:/autopeering
-    - ../gossip:/gossip
+    - ../autopeering:/declimnet/autopeering
+    - ../gossip:/declimnet/gossip
+    - ../inference:/declimnet/inference
     networks:
     - limnet
 

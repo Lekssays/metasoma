@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"sync"
 )
 
 func sendResponse(conn net.Conn) {
@@ -44,7 +45,7 @@ func handleRequest(conn net.Conn) {
 	}
 }
 
-func main() {
+func RunServer(wg *sync.WaitGroup) {
 	address := "0.0.0.0"
 	port := 1337
 	addr := fmt.Sprintf("%s:%d", address, port)

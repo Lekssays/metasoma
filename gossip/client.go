@@ -8,7 +8,7 @@ import (
 	"net"
 )
 
-func main() {
+func RunClient() {
 	address := "0.0.0.0"
 	port := 1337
 	buffer := make([]byte, 512)
