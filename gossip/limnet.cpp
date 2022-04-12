@@ -1,10 +1,11 @@
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <random>
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <concurrentqueue/concurrentqueue.h>
+#include <concurrentqueue/blockingconcurrentqueue.h>
 #include <pcapplusplus/PcapLiveDevice.h>
 #include <torch/script.h>
 #include <torch/torch.h>
@@ -51,7 +52,7 @@ struct shared_mem_t {
 };
 using message_t = std::variant<std::unique_ptr<packet_t>, shared_mem_t>;
 
-moodycamel::ConcurrentQueue<message_t> message_queue;
+moodycamel::BlockingConcurrentQueue<message_t> message_queue;
 std::unordered_map<ip_t, memory_t> memories;
 std::mutex memories_mutex;
 
@@ -70,7 +71,9 @@ void limnet_thread_func() {
     torch::NoGradGuard no_grad;
     while (!needs_to_terminate) {
         message_t message;
-        message_queue.try_dequeue(message);
+        if !(message_queue.wait_dequeue_timed(message, std::chrono::milliseconds(100))) {
+            continue;
+        }
         switch (message.index()) {
             case 0: {
                 auto packet = std::get<0>(std::move(message));
