@@ -8,6 +8,7 @@ enum Purpose {
     PEERING = 0;
     PING = 1;
     PONG = 2;
+    GOSSIP = 3;
 }
 
 message Distance {
@@ -32,7 +33,7 @@ message Peer {
 }
 
 message Gossip {
-    repeated Peer peers = 2;
+    repeated Peer peers = 1;
 }
 
 message Request {
@@ -52,4 +53,5 @@ message Response {
     string checksum = 5;
     Purpose purpose = 6;
     string uuid = 7;
+    repeated Peer peers = 8;
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
@@ -201,7 +202,7 @@ func EvaluatePeeringRequest(request *peering.Request) peering.Response {
 	return response
 }
 
-func GetCurrentPeers() []string {
+func GetCurrentPeersEndpoints() []string {
 	endpoints := make([]string, 0)
 	distances, _ := GetPeersDistances()
 	for i := 0; i < len(distances); i++ {
@@ -210,25 +211,48 @@ func GetCurrentPeers() []string {
 	return endpoints
 }
 
+func GetCurrentPeers() ([]*peering.Peer, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
+
+	peersStrings, err := rdb.SMembers(ctx, "peers").Result()
+	if err != nil {
+		return []*peering.Peer{}, err
+	}
+
+	var peers []*peering.Peer
+	for i := 0; i < len(peersStrings); i++ {
+		var peer peering.Peer
+		err = proto.UnmarshalText(peersStrings[i], &peer)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		peers = append(peers, &peer)
+	}
+
+	return peers, nil
+}
+
 func LoadBasePeers() {
 	// todo(ahmed): Load peers from a generated binary (nodes managed by LiMNet admins)
-	var distance peering.Distance
-	if DISCOVERY_ADDRESS == "peer0.limnet.io" {
-		distance = peering.Distance{
+	NPEERS := 4
+	var peer peering.Peer
+	for i := 0; i < NPEERS; i++ {
+		istr := strconv.Itoa(i)
+		peer = peering.Peer{
 			Publickey: "",
-			Address:   "peer1.limnet.io",
+			Address:   "peer" + istr + ".limnet.io",
 			Port:      1337,
-			Value:     100,
 		}
-	} else if DISCOVERY_ADDRESS == "peer1.limnet.io" {
-		distance = peering.Distance{
-			Publickey: "",
-			Address:   "peer0.limnet.io",
-			Port:      1337,
-			Value:     100,
+		if peer.Address == DISCOVERY_ADDRESS {
+			continue
 		}
+		SavePeer(peer)
 	}
-	SavePeerDistance(distance)
 }
 
 func SaveRequest(request peering.Request) (bool, error) {
@@ -298,7 +322,7 @@ func EvaluateResponse(response *peering.Response) bool {
 		log.Fatal(err.Error())
 		return false
 	}
-	
+
 	var request peering.Request
 	found := false
 	for i := 0; i < len(requests); i++ {
@@ -337,4 +361,22 @@ func GenerateProof() string {
 	b := make([]byte, length)
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)[:length]
+}
+
+func SavePeer(peer peering.Peer) (bool, error) {
+	var ctx = context.Background()
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     REDIS_SERVER,
+		Password: "",
+		DB:       0,
+	})
+
+	peerString := proto.MarshalTextString(&peer)
+
+	err := rdb.SAdd(ctx, "peers", peerString).Err()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

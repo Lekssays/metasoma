@@ -18,7 +18,7 @@ import (
 func main() {
 	fmt.Println("Starting Autopeering Service :)...")
 
-	if _, err := os.Stat("./pubkey.pem"); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat("./" + DISCOVERY_ADDRESS + "_pubkey.pem"); errors.Is(err, os.ErrNotExist) {
 		GenerateKeyPair()
 		LoadBasePeers()
 	}
@@ -64,6 +64,13 @@ func main() {
 				} else if rtype.Response.Purpose == peering.Purpose_PEERING {
 					log.Printf("Receiving %s response with result %s from %v", rtype.Response.Purpose, strconv.FormatBool(rtype.Response.Result), remoteaddr)
 					EvaluateResponse(rtype.Response)
+				} else if rtype.Response.Purpose == peering.Purpose_GOSSIP {
+					log.Printf("Receiving %s response from %v", rtype.Response.Purpose, remoteaddr)
+					for i := 0; i < len(rtype.Response.Peers); i++ {
+						peer := rtype.Response.Peers[i]
+						log.Printf("Sending %s request to %s:%d", rtype.Response.Purpose, peer.Address, int(peer.Port))
+						SendRequest(peering.Purpose_PEERING, peer.Address, int(peer.Port))
+					}
 				}
 			case *peering.Payload_Request:
 				log.Printf("Receiving %s request from %v", rtype.Request.Purpose, remoteaddr)
@@ -78,10 +85,10 @@ func main() {
 		var wg sync.WaitGroup
 		sent := make(map[string]bool)
 		for {
-			timer := time.After(6 * time.Minute)
+			timer := time.After(1 * time.Second)
 
-			wg.Add(1)
-			go CheckLiveness(&wg)
+			// wg.Add(1)
+			// go CheckLiveness(&wg)
 
 			wg.Add(1)
 			go GossipPeers(&wg, sent)
@@ -89,6 +96,18 @@ func main() {
 			wg.Wait()
 
 			<-timer
+		}
+	} else if args[0] == "simulator" {
+		now := time.Now().Unix()
+		SIMULATION_PERIOD := 100
+		for time.Now().Unix()-now <= int64(SIMULATION_PERIOD) {
+			peers, _ := GetCurrentPeers()
+			neighbors, _ := GetPeersDistances()
+			entry := fmt.Sprintf("peers: %v", peers)
+			WriteLog(entry)
+			entry = fmt.Sprintf("neighbors: %v", neighbors)
+			WriteLog(entry)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }

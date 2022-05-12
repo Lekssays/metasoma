@@ -3,13 +3,12 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
-	"time"
 
 	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
 	"github.com/golang/protobuf/proto"
@@ -100,15 +99,17 @@ func SendResponse(request *peering.Request, conn *net.UDPConn, addr *net.UDPAddr
 	pubkey, _ := GetKey("pubkey")
 	if request.Purpose == peering.Purpose_PEERING {
 		response = EvaluatePeeringRequest(request)
-	} else if request.Purpose == peering.Purpose_PING {
+	} else if request.Purpose == peering.Purpose_PING || request.Purpose == peering.Purpose_GOSSIP {
+		peers, _ := GetCurrentPeers()
 		response = peering.Response{
 			Result:    false,
 			Proof:     "null",
 			Signature: "null",
 			Publickey: pubkey,
 			Checksum:  "null",
-			Purpose:   peering.Purpose_PONG,
+			Purpose:   peering.Purpose_GOSSIP,
 			Uuid:      request.Uuid,
+			Peers:     peers,
 		}
 	}
 
@@ -119,46 +120,70 @@ func SendResponse(request *peering.Request, conn *net.UDPConn, addr *net.UDPAddr
 	}
 
 	payloadProto, _ := proto.Marshal(&payload)
+	log.Printf("Sending %s response to %s:%d\n", response.Purpose, addr.IP.String(), addr.Port)
 	_, err := conn.WriteToUDP(payloadProto, addr)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
-func CheckLiveness(wg *sync.WaitGroup) {
-	endpoints := GetCurrentPeers()
-	if len(endpoints) > 0 {
-		for i := 0; i < len(endpoints); i++ {
-			endpoint := strings.Split(endpoints[i], ":")
-			address := endpoint[0]
-			port, err := strconv.Atoi(endpoint[1])
-			if err != nil {
-				log.Fatal(err)
-				wg.Done()
-			}
-			if address != DISCOVERY_ADDRESS {
-				SendRequest(peering.Purpose_PING, address, port)
-			}
-		}
+// func CheckLiveness(wg *sync.WaitGroup) {
+// 	endpoints := GetCurrentPeers()
+// 	if len(endpoints) > 0 {
+// 		for i := 0; i < len(endpoints); i++ {
+// 			endpoint := strings.Split(endpoints[i], ":")
+// 			address := endpoint[0]
+// 			port, err := strconv.Atoi(endpoint[1])
+// 			if err != nil {
+// 				log.Fatal(err)
+// 				wg.Done()
+// 			}
+// 			if address != DISCOVERY_ADDRESS {
+// 				SendRequest(peering.
+// 			}
+// 		}
+// 	}
+// 	time.Sleep(60 * time.Second)
+// 	wg.Done()
+// }
+
+// func GossipPeers(wg *sync.WaitGroup, sent map[string]bool) {
+// 	peers := make([]peering.Peer, 0)
+// 	distances, _ := GetPeersDistances()
+// 	for i := 0; i < len(distances); i++ {
+// 		peer := peering.Peer{
+// 			Publickey: distances[i].Publickey,
+// 			Address:   distances[i].Address,
+// 			Port:      distances[i].Port,
+// 		}
+// 		if !sent[peer.Publickey] {
+// 			sent[peer.Publickey] = true
+// 			peers = append(peers, peer)
+// 		}
+// 	}
+// 	time.Sleep(1 * time.Second)
+// 	wg.Done()
+// }
+
+func WriteLog(content string) {
+	address := os.Getenv("DISCOVERY_ADDRESS")
+	f, err := os.OpenFile(address+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
 	}
-	time.Sleep(60 * time.Second)
-	wg.Done()
+	defer f.Close()
+	wrt := io.MultiWriter(os.Stdout, f)
+	log.SetOutput(wrt)
+	log.Println(content)
 }
 
 func GossipPeers(wg *sync.WaitGroup, sent map[string]bool) {
-	peers := make([]peering.Peer, 0)
-	distances, _ := GetPeersDistances()
-	for i := 0; i < len(distances); i++ {
-		peer := peering.Peer{
-			Publickey: distances[i].Publickey,
-			Address:   distances[i].Address,
-			Port:      distances[i].Port,
-		}
-		if !sent[peer.Publickey] {
-			sent[peer.Publickey] = true
-			peers = append(peers, peer)
+	peers, _ := GetCurrentPeers()
+	for i := 0; i < len(peers); i++ {
+		if peers[i].Address != DISCOVERY_ADDRESS && !sent[peers[i].Address] {
+			SendRequest(peering.Purpose_GOSSIP, peers[i].Address, int(peers[i].Port))
 		}
 	}
-	time.Sleep(300 * time.Second)
+	// time.Sleep(2 * time.Second)
 	wg.Done()
 }

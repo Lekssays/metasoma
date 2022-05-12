@@ -11,8 +11,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
 	"os"
+
+	"github.com/go-redis/redis/v8"
 )
 
 const (
@@ -81,7 +82,7 @@ func ExportRSAPrivateKey(privkey *rsa.PrivateKey) string {
 			Bytes: privkey_bytes,
 		},
 	)
-	ok, _ := WriteToFile(string(privkey_pem), "privkey.pem")
+	ok, _ := WriteToFile(string(privkey_pem), DISCOVERY_ADDRESS+"_privkey.pem")
 	if !ok {
 		return ""
 	}
@@ -117,7 +118,7 @@ func ExportRSAPublicKey(pubkey *rsa.PublicKey) string {
 			Bytes: pubkey_bytes,
 		},
 	)
-	ok, _ := WriteToFile(string(pubkey_pem), "pubkey.pem")
+	ok, _ := WriteToFile(string(pubkey_pem), DISCOVERY_ADDRESS+"_pubkey.pem")
 	if !ok {
 		return ""
 	}
