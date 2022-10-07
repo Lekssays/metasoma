@@ -1,8 +1,9 @@
-module github.com/Lekssays/ADeLe/gossip
+module github.com/Lekssays/metasoma/gossip
 
-go 1.16
+go 1.17
 
 require (
-	github.com/golang/protobuf v1.5.2 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	github.com/Lekssays/ADeLe/gossip v0.0.0-20221007095256-47b61f545c24
+	github.com/golang/protobuf v1.5.2
+	google.golang.org/protobuf v1.28.1
 )

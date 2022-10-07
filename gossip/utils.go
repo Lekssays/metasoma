@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/Lekssays/ADeLe/gossip/proto/message"
-	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
+
+	"github.com/Lekssays/metasoma/gossip/proto/message"
+	"github.com/golang/protobuf/proto"
 )
 
 func GetMergedMemory(memories []message.Memory) message.Memory {

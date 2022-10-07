@@ -1,4 +1,4 @@
-module github.com/Lekssays/ADeLe/autopeering
+module github.com/Lekssays/metasoma/autopeering
 
 go 1.17
 

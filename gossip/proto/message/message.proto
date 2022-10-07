@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package message;
 
-option go_package = "github.com/Lekssays/ADeLe/gossip/proto/message";
+option go_package = "github.com/Lekssays/metasoma/gossip/proto/message";
 
 message Memory {
     uint32 from = 1;

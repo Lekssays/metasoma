@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
+	"github.com/Lekssays/metasoma/autopeering/protos/peering"
 	"github.com/golang/protobuf/proto"
 )
 

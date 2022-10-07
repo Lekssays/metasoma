@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package message;
 
-option go_package = "github.com/Lekssays/ADeLe/autopeering/proto/peering";
+option go_package = "github.com/Lekssays/metasoma/autopeering/proto/peering";
 
 enum Purpose {
     PEERING = 0;

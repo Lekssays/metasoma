@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
+	"github.com/Lekssays/metasoma/autopeering/protos/peering"
 	"github.com/drand/drand/client"
 	"github.com/drand/drand/client/http"
 	"github.com/go-redis/redis/v8"

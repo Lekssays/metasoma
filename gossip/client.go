@@ -3,9 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/golang/protobuf/proto"
 	"log"
 	"net"
+
+	"github.com/golang/protobuf/proto"
 )
 
 func RunClient() {

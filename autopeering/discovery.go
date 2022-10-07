@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Lekssays/ADeLe/autopeering/protos/peering"
+	"github.com/Lekssays/metasoma/autopeering/protos/peering"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
 )

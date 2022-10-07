@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/Lekssays/ADeLe/gossip/proto/message"
-	"github.com/golang/protobuf/proto"
 	"io"
 	"log"
 	"net"
 	"os"
 	"sync"
+
+	"github.com/Lekssays/ADeLe/gossip/proto/message"
+	"github.com/golang/protobuf/proto"
 )
 
 func sendResponse(conn net.Conn) {
