@@ -8,7 +8,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/Lekssays/ADeLe/gossip/proto/message"
+	"github.com/Lekssays/metasoma/gossip/proto/message"
 	"github.com/golang/protobuf/proto"
 )
 
