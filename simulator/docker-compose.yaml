@@ -15,9 +15,9 @@ services:
     working_dir: /entry
     volumes:
     - ./entry:/entry
-    - ../autopeering:/declimnet/autopeering
-    - ../gossip:/declimnet/gossip
-    - ../inference:/declimnet/inference
+    - ../autopeering:/metasoma/autopeering
+    - ../gossip:/metasoma/gossip
+    - ../inference:/metasoma/inference
     networks:
     - limnet
 
@@ -31,9 +31,9 @@ services:
     working_dir: /entry
     volumes:
     - ./entry:/entry
-    - ../autopeering:/declimnet/autopeering
-    - ../gossip:/declimnet/gossip
-    - ../inference:/declimnet/inference
+    - ../autopeering:/metasoma/autopeering
+    - ../gossip:/metasoma/gossip
+    - ../inference:/metasoma/inference
     networks:
     - limnet
 
@@ -47,9 +47,9 @@ services:
     working_dir: /entry
     volumes:
     - ./entry:/entry
-    - ../autopeering:/declimnet/autopeering
-    - ../gossip:/declimnet/gossip
-    - ../inference:/declimnet/inference
+    - ../autopeering:/metasoma/autopeering
+    - ../gossip:/metasoma/gossip
+    - ../inference:/metasoma/inference
     networks:
     - limnet
 

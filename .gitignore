@@ -148,14 +148,9 @@ client
 server
 *.mem
 *.dat
-*/generated/*
-training_info.h
-inference/limnet
 memory
-*.csv
 *.pem
 guide.md
 utils
-*.pt
 crypto
-autopeering
+inference/inference

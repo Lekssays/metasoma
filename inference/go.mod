@@ -1,3 +1,3 @@
-module github.com/Lekssays/ADeLe/inference
+module github.com/Lekssays/metasoma/inference
 
-go 1.17
+go 1.18
