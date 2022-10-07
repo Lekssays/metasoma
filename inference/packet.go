@@ -14,6 +14,8 @@ type Packet struct {
 	features  []float32
 }
 
+func main() {}
+
 func ReadCSV(filePath string) [][]string {
 	f, err := os.Open(filePath)
 	if err != nil {

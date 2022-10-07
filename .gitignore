@@ -154,3 +154,6 @@ guide.md
 utils
 crypto
 inference/inference
+inference/inference_arm
+gossip/gossip
+gossip/gossip_arm
